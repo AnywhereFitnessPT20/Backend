@@ -23,6 +23,24 @@ function remove(id) {
     .del()
 }
 
+async function add(user) {
+    const [id] = await db('users').insert(user)
+    return id;
+}
+
+function find(){
+    return db('users')
+}
+
+async function add(instructors) {
+    const [id] = await db('instructor').insert(instructors)
+    return id;
+}
+
+function find(){
+    return db('instructor')
+}
+
 module.exports = {
     add,
     find,
