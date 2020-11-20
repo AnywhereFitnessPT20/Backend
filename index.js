@@ -4,46 +4,56 @@ server.use(express.json())
 const lessons = require('./models/dbHelpers.js')
 const users = require('./models/dbHelpers.js')
 const instructor = require('./models/dbHelpers.js')
+const bcrypt = require('bcryptjs')
+
 
 const PORT = 5000
 
-server.get('/fitness/lessons', (req, res) => {
+server.get('/fitness/lessons', async (req, res, next) => {
+    try {
     lessons.find()
     .then(lesson => {
         res.status(200).json(lessons)
     })
-    .catch(err => {
+    } catch(err) {
         res.status(500).json({message: "Server Issuse Fix Me"})
-    }) 
-})
+    }
+    })
 
 
-server.post('/fitness/lessons', (req,res) => {
+server.post('/fitness/lessons', async (req,res) => {
+try {
 lessons.add(req.body)
 .then(lesson => {
     res.status(201).json(lesson)
 })
-.catch(err => {
+} catch(err) {
     res.status(500).json({message: "Cannot Add A Lesson"})
-})
-})
-
-server.get('/fitness/lessons/:id', (req,res) => {
-    const { id } = req.params
-    lessons.findById(id)
-    .then(lesson => {
-      if (lesson) {
-          res.status(200).json(lessons)
-      } else {
-          res.status(404).json({message: "Unable To Find That Lesson ID"})
-      }
-    })
-    .catch(err => {
-        res.status(500).json({message: "No Lesson Found"})
-    })
+}
 })
 
-server.delete('/fitness/lessons/:id', (req,res) => {
+server.get('/fitness/lessons/:id', async (req,res,next) => {
+    try{
+        const { id } = req.params
+        lessons.findById(id)
+        .then(lesson => {
+          if (lesson) {
+              res.status(200).json(lessons)
+          } else {
+              res.status(404).json({message: "Unable To Find That Lesson ID"})
+          }
+    
+        }) 
+        
+
+    }
+    catch(err) {
+    next(err)
+    }
+})
+
+server.delete('/fitness/lessons/:id',  (req,res) => {
+ 
     const { id } = req.params
     lessons.remove(id) 
     .then(count => {
@@ -58,15 +68,35 @@ server.delete('/fitness/lessons/:id', (req,res) => {
     })
 })
 
-server.post('/fitness/signup', (req,res) => {
-    users.add(req.body)
-    .then(user => {
-        res.status(201).json(user)
-    })
-    .catch(err => {
-        res.status(500).json({message: "Cannot Add A Lesson"})
-    })
-    })
+server.post('/fitness/signup', async (req,res) => {
+    try {
+        const salt = await bcrypt.genSalt()
+        const hashedPassword = await bcrypt.hash(req.body.password, salt)
+        console.log(salt)
+        console.log(hashedPassword)
+        const user = {name: req.body.name, password: hashedPassword}
+        signup.push(user)
+        res.status(201).json()
+    } catch {
+        res.status(500).json()
+    }
+})
+server.post('/fitness/users/login', async (req,res) => {
+    const user = users.find(user => user.name = req.body.name)
+    if (user == null) {
+        return res.status(400).json('Cant Find User')
+    } 
+    try {
+      if  (await bcrypt.compare(req.body.password, user.password)){
+       res.json('success')
+      } else {
+          res.json('Not Allowed')
+      }
+    } catch {
+      res.status(500).send()
+    }
+
+})
 
     server.get('/fitness/users/:id', (req,res) => {
         const { id } = req.params
